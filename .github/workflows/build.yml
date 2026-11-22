@@ -1,0 +1,73 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Cache NuGet packages and the plugin CLI
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.nuget/packages
+            ~/.dotnet/tools
+          key: nuget-${{ runner.os }}-${{ hashFiles('build.sh') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Work out the plugin version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            version="${GITHUB_REF_NAME#v}"
+          else
+            version="1.0.0-ci.${GITHUB_RUN_NUMBER}"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Plugin version: $version"
+
+      - name: Build, pack and validate
+        env:
+          PLUGIN_VERSION: ${{ steps.version.outputs.version }}
+        run: bash ./build.sh
+
+      - name: Upload the plugin package
+        uses: actions/upload-artifact@v4
+        with:
+          name: audio-switcher-${{ steps.version.outputs.version }}
+          path: build/artifacts/*.macroDeckPlugin
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Publish the GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.macroDeckPlugin
+          generate_release_notes: true
+          body: |
+            Install: Macro Deck → **Integrations → Add → Install from file…**, pick the `.macroDeckPlugin` below and confirm the unsigned-package prompt.

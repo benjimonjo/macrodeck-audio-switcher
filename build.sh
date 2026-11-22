@@ -16,6 +16,8 @@ PLUGIN_ID="com.benatkins.audio-switcher"
 PLUGIN_NAME="Audio Device Switcher"
 PUBLISHER="Ben Atkins"
 PROJECT="AudioSwitcher"
+# Version to stamp into the manifest (SemVer). CI sets this from the git tag; local builds use 1.0.0.
+PLUGIN_VERSION="${PLUGIN_VERSION:-1.0.0}"
 
 export PATH="$PATH:$HOME/.dotnet/tools:$HOME/.dotnet"
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
@@ -66,10 +68,11 @@ fi
 # Use the git remote (if any) as the manifest's repository link.
 REPO_URL="$(git -C "$HERE" remote get-url origin 2>/dev/null | sed -E 's#^git@([^:]+):#https://\1/#; s#\.git$##' || true)"
 
-python3 - "$CSPROJ" "$ROOT" "$PLUGIN_ID" "$REPO_URL" <<'PY'
+python3 - "$CSPROJ" "$ROOT" "$PLUGIN_ID" "$REPO_URL" "$PLUGIN_VERSION" <<'PY'
 import json, pathlib, re, sys
 csproj, root, plugin_id = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2]), sys.argv[3]
 repo_url = sys.argv[4] if len(sys.argv) > 4 else ""
+version = sys.argv[5] if len(sys.argv) > 5 else ""
 
 def add_ui_reference(path, element):
     text = path.read_text()
@@ -110,6 +113,8 @@ perms = manifest.get("permissions", [])
 if "process:spawn" not in perms:
     perms.append("process:spawn")
 manifest["permissions"] = perms
+if version:
+    manifest["version"] = version
 if repo_url.startswith("https://"):
     manifest["repository"] = repo_url
 manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
@@ -128,7 +133,8 @@ step "Packing"
 mkdir -p "$WORK/artifacts"
 ( cd "$SRC" && macrodeck-plugin build --output "$WORK/artifacts" )
 ARTIFACT="$(ls -t "$WORK"/artifacts/*.macroDeckPlugin | head -n1)"
-macrodeck-plugin validate --artifact "$ARTIFACT" || true
+# Locally a validation problem is only reported; in CI it fails the build.
+macrodeck-plugin validate --artifact "$ARTIFACT" || [ -z "${CI:-}" ]
 
 printf '\n\033[1;32mBuilt: %s\033[0m\n' "$ARTIFACT"
 echo "Install it: Macro Deck -> Integrations -> Add -> Install from file... (confirm the unsigned prompt)."
