@@ -20,3 +20,5 @@ jobs:
       source: src/AudioSwitcher
       changelog: ${{ github.event.release.body }}
       run-tests: false
+      # Pin a released CLI: the default packed with a 3.0.0 beta, which the portal refuses.
+      cli-version: 3.0.0
