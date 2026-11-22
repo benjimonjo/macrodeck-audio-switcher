@@ -1,3 +1,5 @@
+# Publishes to the Macro Deck Creator Portal. Runs when you publish a GitHub release (tag vX.Y.Z);
+# the build then shows up under Builds in the portal. No secrets needed.
 name: Release
 
 on:
@@ -12,5 +14,6 @@ jobs:
       id-token: write
     with:
       version: ${{ github.event.release.tag_name }}
-      source: '.'
+      source: src/AudioSwitcher
       changelog: ${{ github.event.release.body }}
+      run-tests: false

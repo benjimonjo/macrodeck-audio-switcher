@@ -1,0 +1,43 @@
+{
+  "$schema": "https://schemas.macro-deck.app/plugin-manifest-v1.schema.json",
+  "manifestVersion": 1,
+  "id": "com.benatkins.audio-switcher",
+  "name": "Audio Device Switcher",
+  "version": "1.0.0",
+  "description": "Lists your audio outputs and inputs on a 4x3 deck widget and switches the system default with a tap, plus a 'Set audio devices' action. Linux (PipeWire/PulseAudio via pactl), Windows (Core Audio) and macOS (SwitchAudioSource).",
+  "icon": "Assets/icon.svg",
+  "entrypoints": {
+    "win-x64": {
+      "executable": "runtimes/win-x64/AudioSwitcher.dll",
+      "runtime": {
+        "kind": "FrameworkDependent",
+        "dotnetVersion": "10.0"
+      }
+    },
+    "osx-arm64": {
+      "executable": "runtimes/osx-arm64/AudioSwitcher.dll",
+      "runtime": {
+        "kind": "FrameworkDependent",
+        "dotnetVersion": "10.0"
+      }
+    },
+    "linux-x64": {
+      "executable": "runtimes/linux-x64/AudioSwitcher.dll",
+      "runtime": {
+        "kind": "FrameworkDependent",
+        "dotnetVersion": "10.0"
+      }
+    }
+  },
+  "publisher": {
+    "name": "Ben Atkins"
+  },
+  "license": "MIT",
+  "compatibility": {
+    "macroDeck": ">=3.0.0-0"
+  },
+  "permissions": [
+    "process:spawn"
+  ],
+  "repository": "https://github.com/benjimonjo/macrodock-audio-switcher"
+}

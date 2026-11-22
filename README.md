@@ -23,41 +23,44 @@ Monitor sources (`*.monitor`) are hidden from the input list. When you switch th
 
 ## Build and install
 
-You need the .NET 10 SDK and python3.
+You need the .NET 10 SDK (with the ASP.NET Core runtime).
 
 ```bash
-./build.sh
+./build.sh            # builds, packs and validates into artifacts/
+./build.sh --run      # runs it live against the open Macro Deck (approve the pairing prompt)
 ```
 
-The script installs the `macrodeck-plugin` CLI if it's missing. It scaffolds a fresh project from the official template, so the csproj, manifest and `macrodeck-build.json` match your SDK. It copies `plugin-src/` into that project, adds the `MacroDeck.Ui` package reference, compiles, and packs:
-
-```
-build/artifacts/com.benatkins.audio-switcher-1.0.0*.macroDeckPlugin
-```
-
-Then in Macro Deck go to **Integrations → Add → Install from file…**, pick that file, and confirm the unsigned-package prompt.
+Then in Macro Deck go to **Integrations → Add → Install from file…**, pick `artifacts/com.benatkins.audio-switcher-*.macroDeckPlugin`, and confirm the unsigned-package prompt.
 
 To add the tile, edit a profile, add a widget, and search for **Audio devices**. Then drag it to **4 columns × 3 rows**.
 
-To debug live without installing, run `./build.sh --run`. It runs the plugin against the open Macro Deck. Approve the pairing prompt, and logs show in the terminal.
+## Releasing
+
+Every push builds and validates the plugin (`.github/workflows/build.yml`). To publish to the Macro Deck Store, create a GitHub release; `.github/workflows/release.yml` sends that build to the Creator Portal:
+
+```bash
+gh release create v1.1.0 --title "1.1.0" --notes "- What changed"
+```
 
 ## Layout
 
 ```
-plugin-src/
+src/AudioSwitcher/
+  manifest.json                     plugin id, name, entrypoints (version is set from the release tag)
+  macrodeck-build.json              per-platform publish settings
+  Program.cs                        host builder
   PluginIntegration.cs              registers the action, the widget type, and serves the widget UI
   Widget/AudioDevicesWidget.cs      the 4x3 tile (declarative MacroDeck.Ui view + IUiSession)
+  Widget/AudioDevicesConfigView.cs  the widget's settings screen
+  Widget/WidgetOptions.cs           settings stored in the widget's data
   Actions/SetAudioDevicesAction.cs  "Set audio devices" action with dynamic device pickers
   Audio/AudioService.cs             shared snapshot, change feed, polling, switching
   Audio/PactlBackend.cs             Linux: pactl (JSON output, text fallback for pactl < 16)
   Audio/SwitchAudioSourceBackend.cs macOS
   Audio/WindowsCoreAudio*.cs        Windows: Core Audio + IPolicyConfig
-  Widget/AudioDevicesConfigView.cs  the widget's settings screen
-  Widget/WidgetOptions.cs           settings stored in the widget's data
   Localization/Strings.resx         UI strings (generated into the Strings class)
   Assets/icon.svg
-build.sh
 screenshots/                        generic mockups for the README / Store
 ```
 
-The plugin was written against the Macro Deck SDK 3.0.0 API. I read that API from the SDK assemblies that ship with your installed plugins.
+The plugin was written against the Macro Deck SDK 3.0.0 API.
