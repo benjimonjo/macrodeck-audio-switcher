@@ -5,6 +5,9 @@ name: Release
 on:
   release:
     types: [published]
+  # Manual re-run for an existing tag: Actions -> Release -> Run workflow -> pick the tag (not a branch),
+  # or: gh workflow run release.yml --ref v1.0.0
+  workflow_dispatch:
 
 jobs:
   publish:
@@ -13,7 +16,7 @@ jobs:
       contents: read
       id-token: write
     with:
-      version: ${{ github.event.release.tag_name }}
+      version: ${{ github.event.release.tag_name || github.ref_name }}
       source: src/AudioSwitcher
       changelog: ${{ github.event.release.body }}
       run-tests: false

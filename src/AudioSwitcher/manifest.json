@@ -39,5 +39,5 @@
   "permissions": [
     "process:spawn"
   ],
-  "repository": "https://github.com/benjimonjo/macrodock-audio-switcher"
+  "repository": "https://github.com/benjimonjo/macrodeck-audio-switcher"
 }
