@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Actions.SetDevices.Description" xml:space="preserve">
+    <value>Sets the system's default output device, input device, or both.</value>
+  </data>
+  <data name="Actions.SetDevices.Failed" xml:space="preserve">
+    <value>Could not switch the audio device: {error}</value>
+  </data>
+  <data name="Actions.SetDevices.Input.Description" xml:space="preserve">
+    <value>The microphone to record from. Leave on "Don't change" to keep the current one.</value>
+  </data>
+  <data name="Actions.SetDevices.Input.Label" xml:space="preserve">
+    <value>Input device</value>
+  </data>
+  <data name="Actions.SetDevices.MoveStreams.Description" xml:space="preserve">
+    <value>Also moves apps that are already playing or recording onto the new device (Linux).</value>
+  </data>
+  <data name="Actions.SetDevices.MoveStreams.Label" xml:space="preserve">
+    <value>Move playing and recording apps</value>
+  </data>
+  <data name="Actions.SetDevices.Name" xml:space="preserve">
+    <value>Set audio devices</value>
+  </data>
+  <data name="Actions.SetDevices.NothingSelected" xml:space="preserve">
+    <value>Pick an output device, an input device, or both.</value>
+  </data>
+  <data name="Actions.SetDevices.Output.Description" xml:space="preserve">
+    <value>The speakers or headphones to play through. Leave on "Don't change" to keep the current one.</value>
+  </data>
+  <data name="Actions.SetDevices.Output.Label" xml:space="preserve">
+    <value>Output device</value>
+  </data>
+  <data name="Actions.SetDevices.Unchanged" xml:space="preserve">
+    <value>Don't change</value>
+  </data>
+  <data name="Widgets.AudioDevices.Description" xml:space="preserve">
+    <value>Lists your outputs and inputs and switches the system default with a tap. Sized for 4x3.</value>
+  </data>
+  <data name="Widgets.AudioDevices.Empty" xml:space="preserve">
+    <value>No devices found</value>
+  </data>
+  <data name="Widgets.AudioDevices.InputHeading" xml:space="preserve">
+    <value>INPUT</value>
+  </data>
+  <data name="Widgets.AudioDevices.Loading" xml:space="preserve">
+    <value>Loading…</value>
+  </data>
+  <data name="Widgets.AudioDevices.Name" xml:space="preserve">
+    <value>Audio devices</value>
+  </data>
+  <data name="Widgets.AudioDevices.OutputHeading" xml:space="preserve">
+    <value>OUTPUT</value>
+  </data>
+  <data name="Widgets.AudioDevices.SwitchFailed" xml:space="preserve">
+    <value>Could not switch: {error}</value>
+  </data>
+  <data name="Widgets.AudioDevices.Config.LayoutHeading" xml:space="preserve">
+    <value>Layout</value>
+  </data>
+  <data name="Widgets.AudioDevices.Config.Overflow.Label" xml:space="preserve">
+    <value>When there are more devices than fit</value>
+  </data>
+  <data name="Widgets.AudioDevices.Config.Overflow.Description" xml:space="preserve">
+    <value>Shrink every row to fit the tile, or keep rows full size and scroll the column.</value>
+  </data>
+  <data name="Widgets.AudioDevices.Config.Overflow.Fit" xml:space="preserve">
+    <value>Shrink to fit</value>
+  </data>
+  <data name="Widgets.AudioDevices.Config.Overflow.Scroll" xml:space="preserve">
+    <value>Scroll</value>
+  </data>
+  <data name="Widgets.AudioDevices.Config.Columns.Label" xml:space="preserve">
+    <value>Show</value>
+  </data>
+  <data name="Widgets.AudioDevices.Config.Columns.Both" xml:space="preserve">
+    <value>Output and input</value>
+  </data>
+  <data name="Widgets.AudioDevices.Config.Columns.OutputOnly" xml:space="preserve">
+    <value>Output only</value>
+  </data>
+  <data name="Widgets.AudioDevices.Config.Columns.InputOnly" xml:space="preserve">
+    <value>Input only</value>
+  </data>
+  <data name="Widgets.AudioDevices.Config.MoveStreams.Label" xml:space="preserve">
+    <value>Move playing and recording apps</value>
+  </data>
+  <data name="Widgets.AudioDevices.Config.MoveStreams.Description" xml:space="preserve">
+    <value>When you switch, also move apps that are already playing or recording onto the new device (Linux).</value>
+  </data>
+  <data name="Widgets.AudioDevices.Config.DevicesHeading" xml:space="preserve">
+    <value>Devices</value>
+  </data>
+  <data name="Widgets.AudioDevices.Config.HiddenOutputs.Label" xml:space="preserve">
+    <value>Hidden outputs</value>
+  </data>
+  <data name="Widgets.AudioDevices.Config.HiddenOutputs.Description" xml:space="preserve">
+    <value>Outputs that should not appear on this tile.</value>
+  </data>
+  <data name="Widgets.AudioDevices.Config.HiddenInputs.Label" xml:space="preserve">
+    <value>Hidden inputs</value>
+  </data>
+  <data name="Widgets.AudioDevices.Config.HiddenInputs.Description" xml:space="preserve">
+    <value>Inputs that should not appear on this tile.</value>
+  </data>
+</root>
