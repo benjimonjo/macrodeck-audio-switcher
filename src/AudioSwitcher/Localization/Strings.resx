@@ -114,4 +114,22 @@
   <data name="Widgets.AudioDevices.Config.HiddenInputs.Description" xml:space="preserve">
     <value>Inputs that should not appear on this tile.</value>
   </data>
+  <data name="Widgets.AudioDevices.Config.Meters.Label" xml:space="preserve">
+    <value>Level meters</value>
+  </data>
+  <data name="Widgets.AudioDevices.Config.Meters.Description" xml:space="preserve">
+    <value>Show a live level bar under each device. Linux skips Bluetooth microphones so headsets don't drop into call mode. On Windows an input only moves while an app is recording from it. Not available on macOS.</value>
+  </data>
+  <data name="Widgets.AudioDevices.Config.Meters.Off" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="Widgets.AudioDevices.Config.Meters.Outputs" xml:space="preserve">
+    <value>Outputs</value>
+  </data>
+  <data name="Widgets.AudioDevices.Config.Meters.Inputs" xml:space="preserve">
+    <value>Inputs</value>
+  </data>
+  <data name="Widgets.AudioDevices.Config.Meters.Both" xml:space="preserve">
+    <value>Both</value>
+  </data>
 </root>

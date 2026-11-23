@@ -60,4 +60,10 @@ public interface IAudioBackend
 
     /// <summary>Calls <paramref name="changed"/> whenever the system reports a device change. Returns when cancelled.</summary>
     Task WatchAsync(Action changed, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Starts reporting the peak level (0..1, linear) of a device's audio to <paramref name="peak"/> a few
+    /// times a second until the result is disposed. Returns null when this device can't be metered.
+    /// </summary>
+    IDisposable? StartMeter(AudioDirection direction, AudioDevice device, Action<float> peak) => null;
 }

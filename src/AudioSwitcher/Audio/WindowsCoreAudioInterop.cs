@@ -167,3 +167,14 @@ public sealed class NotificationClient(Action changed) : IMMNotificationClient
         }
     }
 }
+
+[ComImport]
+[ComVisible(true)]
+[Guid("C02216F6-8C67-4B5B-9D00-D008E73E0064")]
+[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+public interface IAudioMeterInformation
+{
+    // Only the first vtable slot is used; the rest of the interface is never called.
+    [PreserveSig]
+    int GetPeakValue(out float peak);
+}

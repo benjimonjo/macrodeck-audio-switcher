@@ -36,21 +36,39 @@ internal sealed class AudioDevicesWidget : IUiSession
     private readonly ILogger _logger;
     private readonly WidgetOptions _options;
     private readonly UiState<AudioSnapshot> _state;
+    private readonly LevelMeterService _meters;
+    private readonly UiState<IReadOnlyDictionary<string, double>> _levels;
+    private readonly IDisposable? _meterLease;
     private readonly UiView _view;
     private IUiEventOrigin? _origin;
 
-    public AudioDevicesWidget(UiSurface surface, WidgetOptions options, AudioService audio, ILogger logger)
+    public AudioDevicesWidget(
+        UiSurface surface,
+        WidgetOptions options,
+        AudioService audio,
+        LevelMeterService meters,
+        ILogger logger)
     {
         _audio = audio;
         _logger = logger;
         _options = options;
+        _meters = meters;
         _state = new UiState<AudioSnapshot>(audio.Current);
+        _levels = new UiState<IReadOnlyDictionary<string, double>>(meters.Current);
         _view = new UiView(surface, Build(surface));
         _view.Changed += (_, _) => Changed?.Invoke(this, EventArgs.Empty);
         _view.HandlerFaulted += (_, fault)
             => Faulted?.Invoke(this, new UiSessionFaultedEventArgs(fault.Exception.Message, fault.Exception));
 
         _audio.SnapshotChanged += OnSnapshotChanged;
+        var meterOutputs = options.ShowMeters(AudioDirection.Output);
+        var meterInputs = options.ShowMeters(AudioDirection.Input);
+        if (meterOutputs || meterInputs)
+        {
+            _meters.LevelsChanged += OnLevelsChanged;
+            _meterLease = _meters.Acquire(meterOutputs, meterInputs);
+        }
+
         if (!_audio.HasLoaded)
         {
             _ = _audio.RefreshAsync();
@@ -77,11 +95,25 @@ internal sealed class AudioDevicesWidget : IUiSession
     public ValueTask DisposeAsync()
     {
         _audio.SnapshotChanged -= OnSnapshotChanged;
+        _meters.LevelsChanged -= OnLevelsChanged;
+        _meterLease?.Dispose();
         _view.Dispose();
         return ValueTask.CompletedTask;
     }
 
     private void OnSnapshotChanged(AudioSnapshot snapshot) => _state.Set(snapshot);
+
+    private void OnLevelsChanged(IReadOnlyDictionary<string, double> levels) => _levels.Set(levels);
+
+    private double Level(AudioDirection direction, string deviceId)
+        => _levels.Value.TryGetValue(LevelMeterService.Key(direction, deviceId), out var level) ? level : 0;
+
+    private static string MeterColor(double level) => level switch
+    {
+        > 0.92 => "#ef4444", // close to clipping
+        > 0.75 => "#eab308",
+        _ => "#22c55e",
+    };
 
     private string Accent => _options.AccentColor ?? DefaultAccent;
 
@@ -220,17 +252,54 @@ internal sealed class AudioDevicesWidget : IUiSession
                     // Painted in the row colour when not selected, so the name never shifts sideways.
                     Color = UiValue.From(() => IsSelected() ? SelectedTextColor : RowBackground),
                 },
-                new UiTextRun
+                Name(direction, device, k, IsSelected),
+            ],
+        };
+    }
+
+    /// <summary>The device name, with a level meter under it when meters are on for this column.</summary>
+    private UiElement Name(AudioDirection direction, AudioDevice device, string k, Func<bool> isSelected)
+    {
+        var meter = _options.ShowMeters(direction);
+        bool IsSelected() => isSelected();
+        var name = new UiTextRun
+        {
+            Key = "name-" + k,
+            Text = device.Name,
+            Size = Scaled(m => m.Text),
+            MinSize = Scaled(m => m.Text * 0.8),
+            Color = UiValue.From(() => IsSelected() ? SelectedTextColor : TextColor),
+            Weight = UiValue.From(() => IsSelected() ? UiComponentTextWeights.SemiBold : UiComponentTextWeights.Regular),
+            MaxLines = UiValue.From(() => meter || Metrics().Row < 0.11 ? 1 : 2),
+            Wrap = true,
+            Fill = !meter, // with a meter the name sits on top and the meter takes a fixed strip under it
+        };
+
+        if (!meter)
+        {
+            return name;
+        }
+
+        return new UiStack
+        {
+            Key = "name-meter-" + k,
+            Direction = UiComponentDirections.Vertical,
+            Justify = UiComponentJustify.Center,
+            Align = UiComponentAlignments.Stretch,
+            Fill = true,
+            Gap = Scaled(m => m.Text * 0.15),
+            Children =
+            [
+                name,
+                new UiRangeBar
                 {
-                    Key = "name-" + k,
-                    Text = device.Name,
-                    Size = Scaled(m => m.Text),
-                    MinSize = Scaled(m => m.Text * 0.8),
-                    Color = UiValue.From(() => IsSelected() ? SelectedTextColor : TextColor),
-                    Weight = UiValue.From(() => IsSelected() ? UiComponentTextWeights.SemiBold : UiComponentTextWeights.Regular),
-                    MaxLines = UiValue.From(() => Metrics().Row < 0.11 ? 1 : 2),
-                    Wrap = true,
-                    Fill = true,
+                    Key = "meter-" + k,
+                    MainSize = Scaled(m => m.Text * 0.3),
+                    Thickness = Scaled(m => m.Text * 0.22),
+                    Start = 0,
+                    End = UiValue.From(() => Level(direction, device.Id)),
+                    StartColor = "#22c55e",
+                    EndColor = UiValue.From(() => MeterColor(Level(direction, device.Id))),
                 },
             ],
         };

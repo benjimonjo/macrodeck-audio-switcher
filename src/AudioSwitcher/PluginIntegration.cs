@@ -21,12 +21,14 @@ public sealed class PluginIntegration : IPluginIntegration, IWidgetTypeProvider,
 {
     private readonly ILogger<PluginIntegration> _logger;
     private readonly AudioService _audio;
+    private readonly LevelMeterService _meters;
     private string? _widgetTypeId;
 
     public PluginIntegration(ILogger<PluginIntegration> logger)
     {
         _logger = logger;
         _audio = new AudioService(logger);
+        _meters = new LevelMeterService(_audio, logger);
         Actions = [new SetAudioDevicesAction(_audio)];
     }
 
@@ -39,7 +41,11 @@ public sealed class PluginIntegration : IPluginIntegration, IWidgetTypeProvider,
         return Task.CompletedTask;
     }
 
-    public async Task ShutdownAsync() => await _audio.DisposeAsync().ConfigureAwait(false);
+    public async Task ShutdownAsync()
+    {
+        _meters.Dispose();
+        await _audio.DisposeAsync().ConfigureAwait(false);
+    }
 
     // ----- Widget type -----------------------------------------------------------------------------
 
@@ -86,7 +92,7 @@ public sealed class PluginIntegration : IPluginIntegration, IWidgetTypeProvider,
             && IsOurWidget(Attribute(surface, UiWidgetSurfaceAttributes.WidgetType)))
         {
             var options = WidgetOptions.Parse(Attribute(surface, UiWidgetSurfaceAttributes.Data));
-            return Task.FromResult<IUiSession?>(new AudioDevicesWidget(surface, options, _audio, _logger));
+            return Task.FromResult<IUiSession?>(new AudioDevicesWidget(surface, options, _audio, _meters, _logger));
         }
 
         if (surface.Kind == UiSurfaceKinds.Config

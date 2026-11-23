@@ -28,6 +28,8 @@ public sealed class AudioService : IAsyncDisposable
 
     public AudioSnapshot Current { get; private set; } = AudioSnapshot.Empty;
 
+    internal IAudioBackend Backend => _backend;
+
     public bool HasLoaded { get; private set; }
 
     /// <summary>Raised on a background thread whenever <see cref="Current"/> changes.</summary>

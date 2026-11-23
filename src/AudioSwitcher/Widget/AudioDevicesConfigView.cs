@@ -58,6 +58,20 @@ internal static class AudioDevicesConfigView
                         DefaultValue = WidgetOptions.ColumnsBoth,
                         Binding = Bind.To(new UiState<string>(options.Columns)),
                     },
+                    new UiChoiceInput
+                    {
+                        Key = WidgetOptions.MetersKey,
+                        Label = Strings.Widgets.AudioDevices.Config.Meters.Label(),
+                        Description = Strings.Widgets.AudioDevices.Config.Meters.Description(),
+                        Segmented = true,
+                        Options = Choices(
+                            (WidgetOptions.MetersOff, Strings.Widgets.AudioDevices.Config.Meters.Off()),
+                            (WidgetOptions.MetersOutputs, Strings.Widgets.AudioDevices.Config.Meters.Outputs()),
+                            (WidgetOptions.MetersInputs, Strings.Widgets.AudioDevices.Config.Meters.Inputs()),
+                            (WidgetOptions.MetersBoth, Strings.Widgets.AudioDevices.Config.Meters.Both())),
+                        DefaultValue = WidgetOptions.MetersOff,
+                        Binding = Bind.To(new UiState<string>(options.Meters)),
+                    },
                     new UiBooleanInput
                     {
                         Key = WidgetOptions.MoveStreamsKey,

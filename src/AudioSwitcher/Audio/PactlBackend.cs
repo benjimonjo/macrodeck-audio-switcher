@@ -1,3 +1,6 @@
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 
 namespace AudioSwitcher.Audio;
@@ -10,6 +13,7 @@ internal sealed class PactlBackend : IAudioBackend
     private static readonly string[] ExtraFolders = ["/usr/bin", "/usr/local/bin", "/bin"];
 
     private readonly string? _pactl = ProcessRunner.Find("pactl", ExtraFolders);
+    private readonly string? _parec = ProcessRunner.Find("parec", ExtraFolders);
     private bool _jsonUnsupported;
 
     public TimeSpan PollInterval => TimeSpan.FromSeconds(30);
@@ -113,6 +117,116 @@ internal sealed class PactlBackend : IAudioBackend
             changed();
             await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken).ConfigureAwait(false);
         }
+    }
+
+    public IDisposable? StartMeter(AudioDirection direction, AudioDevice device, Action<float> peak)
+    {
+        if (_parec is not { } parec)
+        {
+            return null;
+        }
+
+        // Recording from a Bluetooth microphone can switch a headset into its low-quality call profile,
+        // so Bluetooth inputs get no meter. (Metering a Bluetooth output only listens to its monitor.)
+        if (direction == AudioDirection.Input && device.Id.StartsWith("bluez_", StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        var source = direction == AudioDirection.Output ? device.Id + ".monitor" : device.Id;
+        var stop = new CancellationTokenSource();
+        _ = Task.Run(() => MeterLoopAsync(parec, source, peak, stop.Token));
+        return new MeterHandle(stop);
+    }
+
+    /// <summary>
+    /// Records the source at a low rate (8 kHz mono float) with parec and reports the peak of every
+    /// 50 ms block. The stream is pinned to its device so default changes and "move apps" leave it alone.
+    /// </summary>
+    private static async Task MeterLoopAsync(string parec, string source, Action<float> peak, CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            using (var process = new Process
+            {
+                StartInfo = ProcessRunner.CreateStartInfo(parec,
+                [
+                    "--device=" + source, "--raw", "--format=float32le", "--channels=1", "--rate=8000",
+                    "--latency-msec=50", "--client-name=Macro Deck Audio Switcher", "--stream-name=Level meter",
+                    "--property=node.dont-move=true", "--property=node.dont-reconnect=true",
+                ]),
+            })
+            {
+                try
+                {
+                    process.Start();
+                    using var registration = cancellationToken.Register(() => ProcessRunner.TryKill(process));
+                    var stream = process.StandardOutput.BaseStream;
+                    var block = new byte[400 * sizeof(float)]; // 50 ms at 8 kHz
+                    var filled = 0;
+                    while (true)
+                    {
+                        var read = await stream.ReadAsync(block.AsMemory(filled), cancellationToken).ConfigureAwait(false);
+                        if (read == 0)
+                        {
+                            break; // parec quit (device gone, server restarted)
+                        }
+
+                        filled += read;
+                        if (filled == block.Length)
+                        {
+                            peak(Peak(block));
+                            filled = 0;
+                        }
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
+                catch (Win32Exception)
+                {
+                    return;
+                }
+                catch (IOException)
+                {
+                }
+                finally
+                {
+                    ProcessRunner.TryKill(process);
+                }
+            }
+
+            try
+            {
+                await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+        }
+    }
+
+    private static float Peak(byte[] block)
+    {
+        var max = 0f;
+        foreach (var sample in MemoryMarshal.Cast<byte, float>(block))
+        {
+            var level = Math.Abs(sample);
+            if (level > max && float.IsFinite(level))
+            {
+                max = level;
+            }
+        }
+
+        return Math.Min(max, 1f);
+    }
+
+    private sealed class MeterHandle(CancellationTokenSource stop) : IDisposable
+    {
+        // Not disposed: the meter loop may still be unwinding with this token.
+        public void Dispose() => stop.Cancel();
     }
 
     private async Task RunCheckedAsync(string[] arguments, CancellationToken cancellationToken)

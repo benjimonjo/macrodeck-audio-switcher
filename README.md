@@ -1,5 +1,12 @@
 # Audio Device Switcher — Macro Deck 3 plugin
 
+<a href="https://macro-deck.app/store/com.benatkins.audio-switcher">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://assets.macro-deck.app/branding/Open%20in%20the%20Macro%20Deck%20Store%20Badge%20Dark.png">
+    <img alt="Open in the Macro Deck Store" src="https://assets.macro-deck.app/branding/Open%20in%20the%20Macro%20Deck%20Store%20Badge%20Light.png" height="56">
+  </picture>
+</a>
+
 Two things for Macro Deck 3:
 
 * **Audio devices widget**: a deck tile laid out for **4×3**. It has an **OUTPUT** column and an **INPUT** column that list every device your system reports and update live as devices come and go. The current default is highlighted in blue with a tick. Tap a device to make it the system default.

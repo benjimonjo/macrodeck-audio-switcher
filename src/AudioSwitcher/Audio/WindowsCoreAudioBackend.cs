@@ -88,6 +88,72 @@ internal sealed class WindowsCoreAudioBackend : IAudioBackend
         }
     }
 
+    /// <summary>
+    /// Polls the endpoint's own peak meter. Windows only measures a capture device while some app is
+    /// recording from it, so an idle microphone stays at zero.
+    /// </summary>
+    public IDisposable? StartMeter(AudioDirection direction, AudioDevice device, Action<float> peak)
+    {
+        var stop = new CancellationTokenSource();
+        var thread = new Thread(() => MeterLoop(device.Id, peak, stop.Token))
+        {
+            IsBackground = true,
+            Name = "Audio level meter",
+        };
+        thread.SetApartmentState(ApartmentState.MTA);
+        thread.Start();
+        return new MeterHandle(stop);
+    }
+
+    private static void MeterLoop(string deviceId, Action<float> peak, CancellationToken cancellationToken)
+    {
+        IMMDeviceEnumerator? enumerator = null;
+        IMMDevice? device = null;
+        object? meterObject = null;
+        try
+        {
+            enumerator = CreateEnumerator();
+            if (enumerator.GetDevice(deviceId, out device) < 0)
+            {
+                return;
+            }
+
+            var iid = typeof(IAudioMeterInformation).GUID;
+            if (device.Activate(ref iid, 23 /* CLSCTX_ALL */, IntPtr.Zero, out meterObject) < 0)
+            {
+                return;
+            }
+
+            var meter = (IAudioMeterInformation)meterObject;
+            while (!cancellationToken.WaitHandle.WaitOne(50))
+            {
+                if (meter.GetPeakValue(out var value) >= 0)
+                {
+                    peak(value);
+                }
+            }
+        }
+        catch (Exception ex) when (ex is COMException or InvalidCastException or AudioBackendException)
+        {
+            // Device unplugged or no meter available: the bar just stays empty.
+        }
+        finally
+        {
+            foreach (var comObject in new[] { meterObject, device, enumerator })
+            {
+                if (comObject is not null && Marshal.IsComObject(comObject))
+                {
+                    Marshal.ReleaseComObject(comObject);
+                }
+            }
+        }
+    }
+
+    private sealed class MeterHandle(CancellationTokenSource stop) : IDisposable
+    {
+        public void Dispose() => stop.Cancel();
+    }
+
     private static IMMDeviceEnumerator CreateEnumerator()
     {
         var type = Type.GetTypeFromCLSID(MmDeviceEnumeratorClsid)
